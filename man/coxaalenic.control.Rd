@@ -1,0 +1,91 @@
+\name{coxaalenic.control}
+\alias{coxaalenic.control}
+
+\title{Control a Cox-Aalen model fit}
+
+\description{
+  Set parameters controlling the model fit returned by
+  \code{\link{coxaalenic}}.
+}
+
+\usage{
+coxaalenic.control(eps = 1e-07, eps.norm = c("max", "grad"),
+                   iter.max = 5000, armijo = 1/3, coef.typ = 1,
+                   coef.max = 10, trace = FALSE, thread.max = 1)
+}
+
+\arguments{
+  \item{eps}{
+    threshold value for the norm used to measure convergence in the
+    parameter estimates.
+  }
+  \item{eps.norm}{
+    a character string identifying the norm to use in the convergence
+    criteria---either the maximum norm between the current and
+    previous parameter values (\code{eps.norm = "max"}) or the inner
+    product between the current value and the score
+    (\code{eps.norm = "grad"}).
+  }
+  \item{iter.max}{
+    maximum number of iterations to attempt.  This ensures that
+    \code{\link{coxaalenic}} will eventually exit, even when the
+    stopping rule is not met.  A warning is issued whenever the
+    estimation routine has stopped before converging on a final
+    parameter value.
+  }
+  \item{armijo}{
+    a scale factor in (0, 1/2) for Armijo's (1966) rule---a step-halving
+    line search used to ensure that each iteration achieves an adequate
+    increase in the log-likelihood.  The model fit is not particularly
+    sensitive to this value.
+  }
+  \item{coef.typ}{
+    a scalar or vector of typical (absolute) values for the
+    multiplicative regression coefficient.
+  }
+  \item{coef.max}{
+    a scalar or vector of probable upper bounds for the multiplicative
+    regression coefficient.  This and the \code{coef.typ} arguments
+    tune variance estimation via the curvature in the profile
+    log-likelihood.
+  }
+  \item{trace}{
+    a logical value indicating that CPLEX should print its results to
+    the screen.
+  }
+  \item{thread.max}{
+    maximum number of CPU threads to allocate to CPLEX.  Default value
+    disables multithreading.  A value of zero allows CPLEX to set the
+    number of threads automatically.  Any value exceeding the total
+    number of logical cores on the system is reset by
+    \code{coxaalenic.control} to \code{detectCores(logical = TRUE)}. If this
+    new value does not reflect the total number of available threads, it
+    is later adjusted by CPLEX.
+  }
+}
+
+\value{
+  A list of the above arguments with their final values.
+}
+
+\references{
+  Boruvka, A. and Cook, R. J. (2014a)
+  A Cox-Aalen model for interval-censored data.
+
+  Armijo, L. (1966)
+  \href{http://dx.doi.org/10.2140/pjm.1966.16.1}{
+    Minimization of functions having Lipschitz continuous first partial
+    derivatives.}
+  \emph{Pacific Journal of Mathematics} \bold{16}, 1--3.
+}
+
+\seealso{\code{\link{coxaalenic}}}
+
+\examples{
+if (is.loaded("coxaalenic", "coxinterval"))
+coxaalenic(Surv(left, right, type = "interval2") ~ prop(treat),
+           data = cosmesis, control = coxaalenic.control(iter.max = 2,
+           trace = TRUE))
+}
+
+\keyword{survival}

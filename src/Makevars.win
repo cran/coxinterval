@@ -1,0 +1,56 @@
+quote = "#"
+SOURCES = coxaalenic.c rcplex.c coxic.c
+OBJECTS = coxaalenic.o rcplex.o coxic.o
+
+ifeq "$(CPLEXLIBVARS)$(CPLEXINCVARS)" ""
+ifeq "$(wildcard $(CPLEXDIR)/cplex)" ""
+CPLEXDIR = 
+endif
+ifeq "$(wildcard $(CPLEXINCDIR)/ilcplex/cplex.h)" ""
+CPLEXINCDIR = 
+endif
+ifeq "$(wildcard $(CPLEXLIBDIR)/cplex*.lib)" ""
+CPLEXLIBDIR = 
+endif
+ifeq "$(CPLEXDIR)" ""
+CPLEXDIR = $(wildcard C:/PROGRA~2/IBM/ILOG/CPLEX*)
+endif
+ifeq "$(CPLEXDIR)" ""
+CPLEXDIR = $(wildcard C:/PROGRA~1/IBM/ILOG/CPLEX*)
+endif
+ifneq "$(CPLEXDIR)" ""
+ifeq "$(CPLEXLIBDIR)" ""
+CPLEXLIBDIR = $(firstword $(wildcard $(CPLEXDIR)/cplex/lib/*/*))
+endif
+ifeq "$(CPLEXINCDIR)" ""
+CPLEXINCDIR = $(firstword $(wildcard $(CPLEXDIR)/cplex/include))
+endif
+endif
+CPLEXLIB = $(firstword $(wildcard $(CPLEXLIBDIR)/cplex*.lib))
+ifneq "$(CPLEXLIB)" ""
+CPLEXLIBVARS = -L$(quote)$(CPLEXLIBDIR)$(quote) \
+	-l$(notdir $(basename $(CPLEXLIB))) -lm
+endif
+CPLEXINC = $(wildcard $(CPLEXINCDIR)/ilcplex/cplex.h)
+ifneq "$(CPLEXINC)" ""
+CPLEXINCVARS = -I$(quote)$(CPLEXINCDIR)$(quote)
+endif
+endif
+
+ifndef CPLEXLIBVARS
+CPLEXINCVARS =
+endif
+
+ifeq "$(WIN)" "64"
+CPLEXINCVARS =
+endif
+
+ifndef CPLEXINCVARS
+SOURCES = coxic.c
+OBJECTS = coxic.o
+CPLEXLIBVARS =
+endif
+
+PKG_CPPFLAGS = $(SHLIB_PTHREAD_FLAGS) $(CPLEXINCVARS)
+PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_PTHREAD_FLAGS) \
+	$(CPLEXLIBVARS)
