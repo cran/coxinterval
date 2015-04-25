@@ -13,8 +13,11 @@ print.coxinterval <- function(x, ...)
   if (x$p > 0) prmatrix(mat)
   else cat("Null model\n")
   cat("\n")
-  options(digits = ceiling(log10(x$n)) + digits)
-  cat("Initial log-likelihood:", x$loglik[1], "\n")
-  cat("Log-likelihood after", x$iter, "iterations:", x$loglik[x$iter], "\n")
+  if (!is.null(x$loglik)) {
+    options(digits = ceiling(log10(x$n)) + digits)
+    cat("Initial log-likelihood:", x$loglik[1], "\n")
+    cat("Log-likelihood after", x$iter, "iterations:", x$loglik[x$iter + 1],
+        "\n")
+  }
   invisible(x)
 }

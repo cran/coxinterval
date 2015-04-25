@@ -45,5 +45,4 @@
 
 \examples{data(cosmesis)}
 
-% RShowDoc("KEYWORDS")
 \keyword{datasets}

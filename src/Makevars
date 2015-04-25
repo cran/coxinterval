@@ -1,5 +1,5 @@
-SOURCES = coxaalenic.c rcplex.c coxic.c
-OBJECTS = coxaalenic.o rcplex.o coxic.o
+SOURCES = coxaalen.c rcplex.c coxdual.c
+OBJECTS = coxaalen.o rcplex.o coxdual.o
 
 ifeq "$(CPLEXLIBVARS)$(CPLEXINCVARS)" ""
 ifeq "$(wildcard $(CPLEXDIR)/cplex)" ""
@@ -39,8 +39,8 @@ CPLEXINCVARS =
 endif
 
 ifndef CPLEXINCVARS
-SOURCES = coxic.c
-OBJECTS = coxic.o
+SOURCES = coxdual.c
+OBJECTS = coxdual.o
 CPLEXLIBVARS =
 endif
 

@@ -1,0 +1,7 @@
+coxinterval 1.1
+
+* Model functions renamed.
+* Added new control parameters.
+* Limited support for null models excluding covariates.
+* Made some utlitity functions external.
+* Minor corrections to sieve estimation.

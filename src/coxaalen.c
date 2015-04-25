@@ -98,9 +98,9 @@ loglik(double *c, double *L, double *z, double *w, int *J)
 }
 
 void
-coxaalenic(double *c, double *L, int *nrowL, double *z, int *nrowz, int *ncolz,
+coxaalen(double *c, double *L, int *nrowL, double *z, int *nrowz, int *ncolz,
            double *w, int *ncolw, int *J, double *A, int *nrowA, double *eps,
-           int *epsnorm, int *maxiter, double *armijo, double *typc,
+           int *epsnorm, int *maxiter, double *armijo, int *varc, double *typc,
            double *supc, int *trace, int *maxthread, double *var, double *ll,
            int *numiter, double *maxnorm, double *gradnorm, double *cputime,
            int *flag)
@@ -199,6 +199,7 @@ coxaalenic(double *c, double *L, int *nrowL, double *z, int *nrowz, int *ncolz,
     ll[iter] = candll;
   } while ((*epsnorm ? *maxnorm : fabs(*gradnorm)) > *eps && iter < *maxiter);
   *numiter = iter;
+  if (*varc == 0) goto deallocate;
   for (i = 0; i < p; i++) { /* curvature scale */
     fixc[i] = c[i];
     for (j = 0; j <= i; j++)
@@ -284,9 +285,9 @@ outer:
       var[i + j*p] = var[j + i*p];
     }
   }
+deallocate:
   endtime = clock();
   *cputime = ((double) (endtime - begtime)) / CLOCKS_PER_SEC;
-deallocate:
   Free(grad1c);
   Free(grad2c);
   Free(grad3c);

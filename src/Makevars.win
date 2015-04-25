@@ -1,6 +1,6 @@
 quote = "#"
-SOURCES = coxaalenic.c rcplex.c coxic.c
-OBJECTS = coxaalenic.o rcplex.o coxic.o
+SOURCES = coxaalen.c rcplex.c coxdual.c
+OBJECTS = coxaalen.o rcplex.o coxdual.o
 
 ifeq "$(CPLEXLIBVARS)$(CPLEXINCVARS)" ""
 ifeq "$(wildcard $(CPLEXDIR)/cplex)" ""
@@ -12,10 +12,10 @@ endif
 ifeq "$(wildcard $(CPLEXLIBDIR)/cplex*.lib)" ""
 CPLEXLIBDIR = 
 endif
-ifeq "$(CPLEXDIR)" ""
+ifeq "$(CPLEXDIR)$(WIN)" "64"
 CPLEXDIR = $(wildcard C:/PROGRA~2/IBM/ILOG/CPLEX*)
 endif
-ifeq "$(CPLEXDIR)" ""
+ifeq "$(CPLEXDIR)$(WIN)" "32"
 CPLEXDIR = $(wildcard C:/PROGRA~1/IBM/ILOG/CPLEX*)
 endif
 ifneq "$(CPLEXDIR)" ""
@@ -41,13 +41,9 @@ ifndef CPLEXLIBVARS
 CPLEXINCVARS =
 endif
 
-ifeq "$(WIN)" "64"
-CPLEXINCVARS =
-endif
-
 ifndef CPLEXINCVARS
-SOURCES = coxic.c
-OBJECTS = coxic.o
+SOURCES = coxdual.c
+OBJECTS = coxdual.o
 CPLEXLIBVARS =
 endif
 

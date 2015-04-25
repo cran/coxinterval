@@ -1,8 +1,11 @@
-coxic <- function(formula, data = parent.frame(), subset, init = NULL,
-                  formula.coxph = NULL, init.coxph = FALSE, control, ...)
+coxdual <- function(formula, data = parent.frame(), subset, init = NULL,
+                    formula.coxph = NULL, init.coxph = FALSE, control, ...)
 {
   ## extract model frame and perform input validation
   cl <- match.call(expand.dots = FALSE)
+  ## set parameters controlling model fit
+  control <- if (missing(control)) coxdual.control(...)
+             else do.call(coxdual.control, control)
   datargs <- c("formula", "data", "subset")
   mf <- cl[c(1, match(datargs, names(cl), nomatch = 0))]
   mf[[1]] <- as.name("model.frame")
@@ -20,7 +23,7 @@ coxic <- function(formula, data = parent.frame(), subset, init = NULL,
   if (length(icls) != 1) stop("Model requires exactly one 'cluster' term.")
   icov <- (1:(length(attr(ftrm, "variables")) - 1))[-c(irsp, itrn, icls)]
   mf$formula <- ftrm
-  mf$na.action <- as.name("na.coxic")
+  mf$na.action <- as.name("na.coxdual")
   suppressWarnings(mf <- eval(mf, parent.frame()))
   mt <- attr(mf, "terms")
   mm <- model.matrix(mt, mf)
@@ -45,39 +48,43 @@ coxic <- function(formula, data = parent.frame(), subset, init = NULL,
   ord <- order(mf[, icls], mf[, itrn][, 1], mf[, itrn][, 2])
   mf <- mf[ord, ]
   mm <- mm[ord, ]
-  ## set parameters controlling model fit
-  control <- if (missing(control)) coxic.control(...)
-             else do.call(coxic.control, control)
-  ## reworked data
-  d <- coxic.data(mf[, icls], mf[, irsp][, 1], mf[, irsp][, 2], mf[, itrn][, 1],
-                  mf[, itrn][, 2], mf[, irsp][, 3], mm[, jcov], states)
+  d <- coxdual.data(mf[, icls], mf[, irsp][, 1], mf[, irsp][, 2],
+                    mf[, itrn][, 1], mf[, itrn][, 2], mf[, irsp][, 3],
+                    mm[, jcov], states, control$sieve, control$eps)
   n <- nrow(d$z)
   ncov <- length(jcov)
-  sieve.size <- with(control, sieve.const * n^sieve.rate)
-  nobs <- mapply(function(x, y) max(1, round(length(x)/y)), d$supp, sieve.size)
-  ind <- mapply(function(x, y) seq(y, length(x), y), x = d$supp, y = nobs,
-                SIMPLIFY = FALSE)
-  part <- mapply(function(x, y) c(0, x[y[-c(1, length(y))]], ceiling(max(d$v))),
-                 x = d$supp, y = ind, SIMPLIFY = FALSE)
+  if (control$sieve) {
+    part <- mapply(function(s, r) s[r >= control$risk.min],
+                   d$supp, d$risk, SIMPLIFY = FALSE)
+    npart <- mapply(function(s, k) max(1, round(length(s)/k)), part,
+                    with(control, sieve.const * n^sieve.rate), SIMPLIFY = FALSE)
+    npart <- mapply(function(s, k) seq(k, length(s), k),
+                    part, npart, SIMPLIFY = FALSE)
+    part <- mapply(function(s, k) c(floor(min(d$u)), s[k[-c(1, length(k))]],
+                                    ceiling(max(d$v))), part, npart,
+                   SIMPLIFY = FALSE)
+  }
+  else part <- lapply(d$supp, function(x) c(0, x))
   npart <- sapply(part, length)
+  ## type-specific partition
   tvec <- do.call("c", part)
   names(tvec) <- NULL
+  ## common partition
   svec <- sort(unique(tvec))
   ## strictly dual right censoring?
   if (with(d, all(left[contrib == 1] == right[contrib == 1]))) censor <- "right"
   else censor <- "interval"
   ## fit right-censored data alternatives with survival's coxph
-  if (censor == "right") {
-    formula.coxph <-
-      if (is.null(formula.coxph)) list(cl$formula)
-      else c(cl$formula, formula.coxph)
-  }
-  fit.coxph <- list(NULL)
-  if (!is.null(formula.coxph))
+  if (censor == "right" & is.null(formula.coxph) & init.coxph)
+    formula.coxph <- list(cl$formula)
+  else if (class(formula.coxph) == "formula")
+    formula.coxph <- list(formula.coxph)
+  fit.coxph <- list()
+  if (!is.null(formula.coxph)) {
     for (i in 1:length(formula.coxph)) {
       fit.coxph[[i]] <- cl
-      fit.coxph[[i]]$formula <-
-        update.formula(fit.coxph[[i]]$formula, formula.coxph[[i]])
+      fit.coxph[[i]]$formula <- update.formula(fit.coxph[[i]]$formula,
+                                               formula.coxph[[i]])
       temp <- gsub("^trans\\(", "strata\\(",
                    attr(terms(fit.coxph[[i]]$formula), "term.labels"))
       ## dispense with extraneous terms for null model
@@ -90,32 +97,36 @@ coxic <- function(formula, data = parent.frame(), subset, init = NULL,
       if (!missing(subset)) temp <- c(temp, subset)
       invisible(capture.output(fit.coxph[[i]] <- try(do.call("coxph", temp))))
       if (inherits(fit.coxph[[i]], "try-error"))
-        fit.coxph[[i]] <-
-          list(call = temp, n = NULL, m = NULL, p = NULL, coef = NULL,
-               var = NULL, basehaz = NULL, loglik = NULL, na.action = NULL)
+        fit.coxph[[i]] <- list(call = temp, error = fit.coxph[[i]][1])
       else {
+        temp <- if (is.null(fit.coxph[[i]]$na.action)) 1:nrow(mf)
+                else -fit.coxph[[i]]$na.action
         fit.coxph[[i]] <-
           list(call = fit.coxph[[i]]$call,
-               n = length(unique(mf[-fit.coxph[[i]]$na.action, icls])),
+               n = length(unique(mf[temp, icls])),
                m = fit.coxph[[i]]$n,
                p = length(fit.coxph[[i]]$coefficients),
                coef = fit.coxph[[i]]$coefficients,
                var = fit.coxph[[i]]$var,
                basehaz = basehaz(fit.coxph[[i]], centered = FALSE),
+               iter = fit.coxph[[i]]$iter,
                loglik = fit.coxph[[i]]$loglik,
                na.action = fit.coxph[[i]]$na.action)
-        if (censor == "right" & i == 1 & length(icov)) {
-          rownames(fit.coxph[[i]]$var) <-
-            colnames(fit.coxph[[i]]$var) <- colnames(mm)[jcov]
+        if (censor == "right" & i == 1) {
+          if (length(icov))
+            rownames(fit.coxph[[i]]$var) <-
+              colnames(fit.coxph[[i]]$var) <- colnames(mm)[jcov]
           names(fit.coxph[[i]]$basehaz) <- c("hazard", "time", "trans")
         }
         fit.coxph[[i]]$call$data <- cl$data
+        class(fit.coxph[[i]]) <- "coxinterval"
       }
     }
+  }
   else fit.coxph <- NULL
   ## initial values
   if (is.null(init)) init <- list()
-  init.coxph <- init.coxph & !is.null(fit.coxph[[1]])
+  init.coxph <- init.coxph & !is.null(fit.coxph$coef[[1]])
   if (init.coxph) {
     init$coef <- fit.coxph[[1]]$coef
     init$basehaz <- fit.coxph[[1]]$basehaz
@@ -155,9 +166,10 @@ coxic <- function(formula, data = parent.frame(), subset, init = NULL,
   }
   init$basehaz <- data.frame(hazard = init$basehaz, time = tvec,
                              trans = rep(c(1, 2, 12), times = npart))
-  basehaz <- lin2const(init$basehaz, stratum = "trans")
+  basehaz <- if (control$sieve) lin2const(init$basehaz, stratum = "trans")
+             else step2jump(init$basehaz, stratum = "trans")
   list(init = init, basehaz = basehaz)
-  fit <- .C("coxic",
+  fit <- .C("coxdual",
             coef = as.double(init$coef),
             basehaz = as.double(basehaz$hazard),
             as.integer(ncov),
@@ -179,17 +191,17 @@ coxic <- function(formula, data = parent.frame(), subset, init = NULL,
             as.integer(control$iter.max),
             as.double(control$coef.typ),
             as.double(control$coef.max),
-            as.integer(length(icov) == 0),
+            zerocoef = as.integer(length(icov) == 0),
+            sieve = as.integer(control$sieve),
             iter = as.integer(0),
             maxnorm = as.double(0),
             gradnorm = as.double(0),
             cputime = as.double(0),
             flag = as.integer(0),
             NAOK = TRUE)
-  if (fit$flag == 1)
+  if (fit$flag == 1 & length(icov) > 0)
     stop("Parameter estimation failed; coefficient Hessian not invertible.")
-  if (with(fit,
-           any(is.na(coef), is.nan(coef), is.na(basehaz), is.nan(basehaz))))
+  if (with(fit, any(is.na(coef), is.nan(coef), is.na(basehaz), is.nan(basehaz))))
     stop("Parameter estimation failed.")
   if (fit$flag == 2)
     stop("Variance estimation failed; profile information not invertible.")
@@ -205,23 +217,25 @@ coxic <- function(formula, data = parent.frame(), subset, init = NULL,
   levels(init$basehaz[, 3]) <- attr(mf, "types")
   basehaz <- data.frame(hazard = fit$basehaz, time = init$basehaz$time,
                         trans = init$basehaz$trans)
-  basehaz <- const2lin(basehaz, stratum = "trans")
+  basehaz <- if (control$sieve) const2lin(basehaz, stratum = "trans")
+             else jump2step(basehaz, stratum = "trans")
   rownames(basehaz) <- rownames(init$basehaz) <- NULL
   censor.rate <-
-    with(d, c(sum(contrib != 0 & absorb), sum(contrib != 0 & !absorb),
-              sum(contrib == 0 & absorb), sum(contrib == 0 & !absorb)))
-  censor.rate <- matrix(censor.rate/n, nrow = 1)
-  dimnames(censor.rate) <-
-    list("Observation rate",
-         c("Status and survival", "Status only", "Survival only", "Neither"))
+    with(d, cbind("Status and survival" = sum(contrib != 0 & absorb),
+                  "Status only" = sum(contrib != 0 & !absorb),
+                  "Survival only" = sum(contrib == 0 & absorb),
+                  "Neither" = sum(contrib == 0 & !absorb))) / n
+  rownames(censor.rate) <- "Observation rate"
+  if (length(fit.coxph) == 1) fit.coxph <- fit.coxph[[1]]
   fit <- list(call = cl, censor = censor, n = n, m = nrow(mf),
               p = ncov * (length(icov) > 0), coef = fit$coef, var = var,
-              basehaz = basehaz, init = init,
-              loglik = n * fit$loglik[1:(fit$iter + 1)], iter = fit$iter,
-              maxnorm = fit$maxnorm, gradnorm = fit$gradnorm,
-              cputime = fit$cputime, fit.coxph = fit.coxph,
+              basehaz = basehaz, init = init, loglik = n * fit$loglik,
+              iter = fit$iter, maxnorm = fit$maxnorm, gradnorm = fit$gradnorm,
+              cputime = fit$cputime, coxph = fit.coxph,
               na.action = attr(mf, "na.action"), censor.rate = censor.rate,
-              control = control)
-  class(fit) <- c("coxic", "coxinterval")
+              control = control, nullmodel = fit$zerocoef)
+  if (control$data) fit$data <- d
+  if (length(fit$coxph) == 1) fit$coxph <- fit$coxph[[1]]
+  class(fit) <- c("coxdual", "coxinterval")
   fit
 }

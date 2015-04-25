@@ -7,7 +7,7 @@
 \description{
   Data from a Markov illness-death process with progression and death
   observed under dual right censoring, simulated according to the
-  initial scenario described in Boruvka and Cook (2014b).
+  initial scenario described in Boruvka and Cook (2014).
 }
 
 \usage{data(dualrc)}
@@ -45,12 +45,12 @@
 }
 
 \references{
-  Boruvka, A. and Cook, R. J. (2014b)
+  Boruvka, A. and Cook, R. J. (2014)
   Sieve estimation in a Markov illness-death process under dual censoring.
 }
 
 \seealso{
-  \code{\link{coxic}}
+  \code{\link{coxdual}}
 }
 
 \examples{data(dualrc)}

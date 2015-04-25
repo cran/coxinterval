@@ -1,17 +1,18 @@
-\name{coxaalenic.control}
-\alias{coxaalenic.control}
+\name{coxaalen.control}
+\alias{coxaalen.control}
 
 \title{Control a Cox-Aalen model fit}
 
 \description{
   Set parameters controlling the model fit returned by
-  \code{\link{coxaalenic}}.
+  \code{\link{coxaalen}}.
 }
 
 \usage{
-coxaalenic.control(eps = 1e-07, eps.norm = c("max", "grad"),
-                   iter.max = 5000, armijo = 1/3, coef.typ = 1,
-                   coef.max = 10, trace = FALSE, thread.max = 1)
+coxaalen.control(eps = 1e-07, eps.norm = c("max", "grad"),
+                 iter.max = 5000, armijo = 1/3, var.coef = TRUE,
+                 coef.typ = 1, coef.max = 10, trace = FALSE,
+                 thread.max = 1)
 }
 
 \arguments{
@@ -28,7 +29,7 @@ coxaalenic.control(eps = 1e-07, eps.norm = c("max", "grad"),
   }
   \item{iter.max}{
     maximum number of iterations to attempt.  This ensures that
-    \code{\link{coxaalenic}} will eventually exit, even when the
+    \code{\link{coxaalen}} will eventually exit, even when the
     stopping rule is not met.  A warning is issued whenever the
     estimation routine has stopped before converging on a final
     parameter value.
@@ -38,6 +39,10 @@ coxaalenic.control(eps = 1e-07, eps.norm = c("max", "grad"),
     line search used to ensure that each iteration achieves an adequate
     increase in the log-likelihood.  The model fit is not particularly
     sensitive to this value.
+  }
+  \item{var.coef}{
+    a logical value indicating that standard errors for the regression
+    coefficients should be estimated via profile likelihood.
   }
   \item{coef.typ}{
     a scalar or vector of typical (absolute) values for the
@@ -58,7 +63,7 @@ coxaalenic.control(eps = 1e-07, eps.norm = c("max", "grad"),
     disables multithreading.  A value of zero allows CPLEX to set the
     number of threads automatically.  Any value exceeding the total
     number of logical cores on the system is reset by
-    \code{coxaalenic.control} to \code{detectCores(logical = TRUE)}. If this
+    \code{coxaalen.control} to \code{detectCores(logical = TRUE)}. If this
     new value does not reflect the total number of available threads, it
     is later adjusted by CPLEX.
   }
@@ -69,8 +74,10 @@ coxaalenic.control(eps = 1e-07, eps.norm = c("max", "grad"),
 }
 
 \references{
-  Boruvka, A. and Cook, R. J. (2014a)
-  A Cox-Aalen model for interval-censored data.
+  Boruvka, A. and Cook, R. J. (2015)
+  \href{http://dx.doi.org/10.1111/sjos.12113}{
+    A Cox-Aalen model for interval-censored data}.
+  \emph{Scandinavian Journal of Statistics} \bold{42}, 414--426.
 
   Armijo, L. (1966)
   \href{http://dx.doi.org/10.2140/pjm.1966.16.1}{
@@ -79,13 +86,13 @@ coxaalenic.control(eps = 1e-07, eps.norm = c("max", "grad"),
   \emph{Pacific Journal of Mathematics} \bold{16}, 1--3.
 }
 
-\seealso{\code{\link{coxaalenic}}}
+\seealso{\code{\link{coxaalen}}}
 
 \examples{
-if (is.loaded("coxaalenic", "coxinterval"))
-coxaalenic(Surv(left, right, type = "interval2") ~ prop(treat),
-           data = cosmesis, control = coxaalenic.control(iter.max = 2,
-           trace = TRUE))
+if (is.loaded("coxaalen", "coxinterval"))
+coxaalen(Surv(left, right, type = "interval2") ~ prop(treat),
+         data = cosmesis, control = coxaalen.control(iter.max = 2,
+         trace = TRUE))
 }
 
 \keyword{survival}

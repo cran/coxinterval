@@ -1,8 +1,7 @@
 ### convert piecewise linear values to piecewise constant values
-lin2const <- function(lin, stratum = NULL, time)
+lin2const <- function(lin, time = "time", stratum = NULL)
 {
   if (is.character(stratum)) stratum <- match(stratum, colnames(lin))
-  if (missing(time)) time <- "time"
   if (is.character(time)) time <- match(time, colnames(lin))
   m <- max(1, ncol(lin[, -c(time, stratum)]))
   f <- function(x) c(0, -x[-length(x)]) + x

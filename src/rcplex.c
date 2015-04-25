@@ -24,6 +24,7 @@ freecplex(void)
     else
       Rprintf("Closed CPLEX.\n");
   }
+  return;
 }
 
 int

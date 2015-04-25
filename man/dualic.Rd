@@ -7,7 +7,7 @@
 \description{
   Data from a Markov illness-death process with interval-censored
   progression times, simulated according to the initial scenario
-  described in Boruvka and Cook (2014b).
+  described in Boruvka and Cook (2014).
 }
 
 \usage{data(dualic)}
@@ -45,14 +45,14 @@
 }
 
 \references{
-  Boruvka, A. and Cook, R. J. (2014b)
+  Boruvka, A. and Cook, R. J. (2014)
   Sieve estimation in a Markov illness-death process under dual censoring.
 }
 
-\examples{data(dualic)}
-
 \seealso{
-  \code{\link{coxic}}
+  \code{\link{coxdual}}
 }
+
+\examples{data(dualic)}
 
 \keyword{datasets}

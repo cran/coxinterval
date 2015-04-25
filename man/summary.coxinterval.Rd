@@ -14,7 +14,7 @@
 
 \arguments{
   \item{object}{
-    an object returned by \code{\link{coxaalenic}} or \code{\link{coxic}}.
+    an object returned by \code{\link{coxaalen}} or \code{\link{coxdual}}.
   }
   \item{conf.int}{
     level for confidence intervals. If \code{FALSE}, no confidence
@@ -36,10 +36,10 @@
 
 \examples{
 # Fit Cox model to dual-right--censored data
-fit <- coxic(Surv(start, stop, status) ~ cluster(id) + trans(from, to)
-             + I(z * (to == 1)) + I(z * (from \%in\% 0 & to == 2))
-             + I(z* (from \%in\% c(NA, 1) & to == 2)), data = dualrc,
-             sieve.rate = 2/5)
+fit <- coxdual(Surv(start, stop, status) ~ cluster(id) + trans(from, to)
+               + I(z * (to == 1)) + I(z * (from \%in\% 0 & to == 2))
+               + I(z* (from \%in\% c(NA, 1) & to == 2)), data = dualrc,
+               sieve.rate = 2/5)
 fit
 }
 

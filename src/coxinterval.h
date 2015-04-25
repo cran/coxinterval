@@ -7,9 +7,6 @@
 #  define min(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-/* trace of a matrix */
-double mtrace(const double *A, const int n);
-
 /* Bunch-Kaufman factorization for a symmetric matrix */
 extern
 void F77_SUB(dsytrf)(const char *uplo, const int *n, double *a, const int *lda,

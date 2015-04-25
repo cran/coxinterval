@@ -13,7 +13,7 @@
 
 \arguments{
   \item{x}{
-    an object returned by \code{\link{coxaalenic}} or \code{\link{coxic}}.
+    an object returned by \code{\link{coxaalen}} or \code{\link{coxdual}}.
   }
   \item{\dots}{
     further arguments for other methods.

@@ -1,5 +1,5 @@
 ### construct inequality constraint matrix (requires Matrix)
-coxaalenic.ineq <- function(w, k)
+coxaalen.ineq <- function(w, k)
 {
   if (!length(dim(w))) w <- matrix(w)
   m <- ncol(w)
@@ -10,7 +10,8 @@ coxaalenic.ineq <- function(w, k)
             + (2^(0:(m - 1)) + c(0, rep(1, m - 1))))
     mat <- cbind(1, t(matrix(as.vector(val)[ind], nrow = m)))
   }
-  dia <- as.matrix(do.call(bdiag, lapply(vector("list", k), function(y) mat)))
+  dia <- as.matrix(do.call(Matrix::bdiag,
+                           lapply(vector("list", k), function(y) mat)))
   dia - rbind(matrix(0, nrow = nrow(mat), ncol = ncol(dia)),
               dia[1:(nrow(dia) - nrow(mat)), ])
 }

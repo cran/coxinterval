@@ -1,8 +1,7 @@
 ### convert cumulative values to jumps
-step2jump <- function(step, stratum = NULL, time)
+step2jump <- function(step, time = "time", stratum = NULL)
 {
   if (is.character(stratum)) stratum <- match(stratum, colnames(step))
-  if (missing(time)) time <- "time"
   if (is.character(time)) time <- match(time, colnames(step))
   m <- max(1, ncol(step[, -c(time, stratum)]))
   f <- function(x) c(0, -x[-length(x)]) + x

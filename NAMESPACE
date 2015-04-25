@@ -1,12 +1,21 @@
 useDynLib(coxinterval)
-import(Matrix, parallel, survival, timereg)
-export("coxic",
-       "coxic.control",
-       "coxaalenic",
-       "coxaalenic.control",
+importFrom(Matrix, bdiag)
+import(survival)
+importFrom(timereg, cox.aalen, prop)
+export("const2lin",
+       "coxdual",
+       "coxdual.control",
+       "coxaalen",
+       "coxaalen.control",
+       "jump2step",
+       "lin2const",
+       "linapprox",
+       "maximalint",
+       "step2jump",
+       "step2stepfun",
        "trans",
-       "na.coxic")
+       "na.coxdual")
 S3method(print, coxinterval)
 S3method(print, summary.coxinterval)
 S3method(summary, coxinterval)
-S3method(na.coxic, default)
+S3method(na.coxdual, default)

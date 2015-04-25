@@ -37,11 +37,11 @@ print.summary.coxinterval <-
   options(digits = ceiling(log10(x$n)) + digits)
   cat("\n")
   cat("Initial log-likelihood:", x$loglik[1], "\n")
-  cat("Log-likelihood after", x$iter, "iterations:", x$loglik[x$iter], "\n")
+  cat("Log-likelihood after", x$iter, "iterations:", x$loglik[2], "\n")
   options(digits = digits)
   cat("\n")
   prmatrix(x$censor.rate)
-  if (length(x$rcfit)) {
+  if (!is.null(x$rcfit)) {
     cat("\n")
     if (is.null(x$censor))
       cat("Estimation from imputed data via timereg's cox.aalen function\n")
@@ -49,7 +49,7 @@ print.summary.coxinterval <-
       cat("Estimation from right-censored data via survival's coxph function\n")
     else
       cat("Estimation from imputed data via survival's coxph function\n")
-    lapply(x$rcfit, f)
+    f(x$rcfit)
   }
   invisible()
 }

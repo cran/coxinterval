@@ -1,11 +1,14 @@
-coxaalenic <- function(formula, data = parent.frame(), subset, init = NULL,
-                       formula.timereg = NULL, init.timereg = FALSE,
-                       close.cplex = TRUE, control, ...)
+coxaalen <- function(formula, data = parent.frame(), subset, init = NULL,
+                     formula.timereg = NULL, init.timereg = FALSE,
+                     close.cplex = TRUE, control, ...)
 {
   ## extract model frame and perform input validation
   cl <- match.call(expand.dots = FALSE)
-  if (!is.loaded("coxaalenic", "coxinterval"))
+  if (!is.loaded("coxaalen", "coxinterval"))
     stop("Required CPLEX-dependent libraries are unavailable.")
+  ## set parameters controlling model fit
+  control <- if (missing(control)) coxaalen.control(...)
+             else do.call(coxaalen.control, control)
   datargs <- c("formula", "data", "subset")
   mf <- cl[c(1, match(datargs, names(cl), nomatch = 0))]
   mf[[1]] <- as.name("model.frame")
@@ -28,33 +31,31 @@ coxaalenic <- function(formula, data = parent.frame(), subset, init = NULL,
   asgn <- frame.assign(mf, mt, mm)
   jprp <- subset.data.frame(asgn, frame %in% iprp)$matrix
   ## additive term always includes intercept
-  jadd <-
-    if (length(iadd)) c(1, subset.data.frame(asgn, frame %in% iadd)$matrix)
-    else 1
+  jadd <- if (length(iadd)) c(1, subset.data.frame(asgn, frame %in% iadd)$matrix)
+          else 1
   if (!inherits(mf[, irsp], "Surv")) stop("Response is not a 'Surv' object")
   ## Surv converts interval2 to interval
-  if (attr(mf[, irsp], "type") != "interval"
-      | !(all(mf[, irsp][, 3] %in% c(0, 3))))
+  if (attr(mf[, irsp], "type") != "interval")
     stop("Response is not an 'interval2'-type 'Surv' object")
   ## fit right-censored data alternatives with timereg's cox.aalen
-  fit.timereg <- list(NULL)
-  if (!is.null(formula.timereg)) {
-    if (!missing(subset)) warning("Model alternatives not based on subset")
-    keep <- 1:nrow(data)
-    if (!is.null(omit <- attr(mf, "na.action"))) keep <- keep[-omit]
+  fit.timereg <- list()
+  if (requireNamespace("timereg", quietly = TRUE) & !is.null(formula.timereg)) {
+    if (class(formula.timereg) == "formula")
+      formula.timereg <- list(formula.timereg)
     for (i in 1:length(formula.timereg)) {
+      if (!missing(subset)) warning("Model alternatives not based on subset")
+      keep <- 1:nrow(data)
+      if (!is.null(omit <- attr(mf, "na.action"))) keep <- keep[-omit]
       fit.timereg[[i]] <- cl
       fit.timereg[[i]]$formula <-
         update.formula(fit.timereg[[i]]$formula, formula.timereg[[i]])
       ## cox.aalen arguments, constructed to avoid NA-related errors
-      temp <-
-        list(formula = fit.timereg[[i]]$formula, data = data[keep, ],
-             robust = 0, silent = 1, max.timepoint.sim = nrow(data))
+      temp <- list(formula = fit.timereg[[i]]$formula, data = data[keep, ],
+                   robust = 0, silent = 1, max.timepoint.sim = nrow(data))
       invisible(capture.output(fit.timereg[[i]] <-
-                               try(do.call("cox.aalen", temp))))
+        try(do.call(cox.aalen, temp))))
       if (inherits(fit.timereg[[i]], "try-error"))
-        fit.timereg[[i]] <-
-          list(call = temp, n = NULL, coef = NULL, var = NULL, basehaz = NULL)
+        fit.timereg[[i]] <- list(call = temp, error = fit.timereg[1])
       else {
         temp <- rownames(fit.timereg[[i]]$gamma)
         fit.timereg[[i]] <- list(call = fit.timereg[[i]]$call,
@@ -66,22 +67,24 @@ coxaalenic <- function(formula, data = parent.frame(), subset, init = NULL,
         names(fit.timereg[[i]]$coef) <- temp
       }
       fit.timereg[[i]]$call$data <- cl$data
+      class(fit.timereg[[i]]) <- "coxinterval"
     }
   }
   else fit.timereg <- NULL
   n <- nrow(mf)
   nadd <- length(jadd)
   nprp <- length(jprp)
-  time <- maximalint(mf[, irsp])
+  tmax <- max(mf[, irsp][mf[, irsp][, 3] == 0, 1],
+              mf[, irsp][mf[, irsp][, 3] == 3, 2])
+  if (tmax == tmax - control$eps)
+    stop("Observations large relative to epsilon. Use a smaller time scale.")
+  time <- maximalint(mf[, irsp], eps = control$eps)
   ntime <- nrow(time$int) - 1
   time$int <- time$int[1:ntime, ]
-  A <- coxaalenic.ineq(mm[, jadd[-1]], ntime)
-  ## set parameters controlling model fit
-  control <- if (missing(control)) coxaalenic.control(...)
-             else do.call(coxaalenic.control, control)
+  A <- coxaalen.ineq(mm[, jadd[-1]], ntime)
   ## initial parameter values
   if (is.null(init)) init <- list()
-  init.timereg <- init.timereg & !is.null(fit.timereg[[1]])
+  init.timereg <- init.timereg & !is.null(fit.timereg[[1]]$coef)
   if (init.timereg) {
     init$coef <- fit.timereg[[1]]$coef
     init$basehaz <- fit.timereg[[1]]$basehaz
@@ -93,10 +96,8 @@ coxaalenic <- function(formula, data = parent.frame(), subset, init = NULL,
       stop("Initial value needs ", nprp, " regression coefficients.")
   }
   if (is.null(init$basehaz)) {
-    init$basehaz <-
-      cbind(with(time, int[, 2] / int[ntime, 2]), matrix(0, ntime, nadd - 1))
-    if (init.timereg & length(fit.timereg))
-      if (!is.null(fit.timereg[[1]])) init$coef <- fit.timereg[[1]]$coef
+    init$basehaz <- cbind(with(time, int[, 2] / int[ntime, 2]),
+                          matrix(0, ntime, nadd - 1))
     basehaz <- NULL
   }
   else {
@@ -119,8 +120,8 @@ coxaalenic <- function(formula, data = parent.frame(), subset, init = NULL,
               function(x) linapprox(data.frame(basehaz$time, x), time$int[, 3]))
     else init$basehaz <- linapprox(basehaz[, 1:2], time$int[, 3])
     ## add to baseline hazard if linear constraints are not met
-    basehaz <-
-      matrix(A %*% as.vector(t(init$basehaz)), ncol = nadd, byrow = TRUE)
+    basehaz <- matrix(A %*% as.vector(t(init$basehaz)), ncol = nadd,
+                      byrow = TRUE)
     basehaz[basehaz > 0] <- 0
     basehaz <- cumsum(apply(-basehaz, 1, max))
     if (length(dim(init$basehaz)))
@@ -128,7 +129,7 @@ coxaalenic <- function(formula, data = parent.frame(), subset, init = NULL,
     else init$basehaz <- init$basehaz + basehaz
   }
   if (close.cplex) on.exit(.C("freecplex"))
-  fit <- .C("coxaalenic",
+  fit <- .C("coxaalen",
             coef = as.double(init$coef),
             basehaz = as.double(t(init$basehaz)),
             as.integer(ntime),
@@ -144,6 +145,7 @@ coxaalenic <- function(formula, data = parent.frame(), subset, init = NULL,
             as.integer(control$eps.norm == "max"),
             as.integer(control$iter.max),
             as.double(control$armijo),
+            as.integer(control$var.coef),
             as.double(control$coef.typ),
             as.double(control$coef.max),
             as.integer(control$trace),
@@ -169,26 +171,31 @@ coxaalenic <- function(formula, data = parent.frame(), subset, init = NULL,
   if (with(fit, iter == control$iter.max & maxnorm > control$eps))
     warning("Maximum iterations reached before convergence.")
   names(fit$coef) <- names(init$coef) <- colnames(mm)[jprp]
-  var <- matrix(fit$var, nprp)
-  rownames(var) <- colnames(var) <- colnames(mm)[jprp]
+  if (control$var.coef) {
+    var <- matrix(fit$var, nprp)
+    rownames(var) <- colnames(var) <- colnames(mm)[jprp]
+  }
+  else var <- matrix(NA, nprp, nprp)
   init$init.timereg <- init.timereg
   init$basehaz <- data.frame(time$int[, 2], init$basehaz)
   init$basehaz <- rbind(0, init$basehaz)
   basehaz <- data.frame(time$int[, 2], t(matrix(fit$basehaz, nadd)))
   basehaz <- rbind(0, basehaz)
   names(basehaz) <- names(init$basehaz) <- c("time", colnames(mm)[jadd])
-  censor.rate <- matrix(c(sum(mf[, irsp][, 1] == 0),
-                          sum(mf[, irsp][, 1] > 0 & mf[, irsp][, 3] == 3),
-                          sum(mf[, irsp][, 3] == 0)) / n, nrow = 1)
-  dimnames(censor.rate) <-
-    list("Censoring rate", c("Left", "Interval", "Right"))
+  censor.rate <-
+    cbind("Exact" = sum(mf[, irsp][, 3] == 1),
+          "Left" = sum(mf[, irsp][, 1] == 0),
+          "Interval" = sum(mf[, irsp][, 1] > 0 & mf[, irsp][, 3] == 3),
+          "Right" = sum(mf[, irsp][, 3] == 0)) / n
+  rownames(censor.rate) <- "Censoring rate"
   fit <- list(call = cl, n = n, p = nprp, coef = fit$coef, var = var,
-              basehaz = basehaz, init = init,
-              loglik = n * fit$loglik[1:(fit$iter + 1)], iter = fit$iter,
-              maxnorm = fit$maxnorm, gradnorm = fit$gradnorm,
-              cputime = fit$cputime, fit.timereg = fit.timereg,
+              basehaz = basehaz, maximalint = time$int, init = init,
+              loglik = n * fit$loglik, iter = fit$iter,
+              maxnorm = fit$maxnorm, gradnorm = abs(fit$gradnorm),
+              cputime = fit$cputime, timereg = fit.timereg,
               na.action = attr(mf, "na.action"), censor.rate = censor.rate,
               control = control)
-  class(fit) <- c("coxaalenic", "coxinterval")
+  if (length(fit$timereg) == 1) fit$timereg <- fit$timereg[[1]]
+  class(fit) <- c("coxaalen", "coxinterval")
   fit
 }

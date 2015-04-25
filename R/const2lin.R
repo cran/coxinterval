@@ -1,8 +1,7 @@
 ### accumulate values from piecewise constant function of time
-const2lin <- function(const, stratum = NULL, time)
+const2lin <- function(const, time = "time", stratum = NULL)
 {
   if (is.character(stratum)) stratum <- match(stratum, colnames(const))
-  if (missing(time)) time <- "time"
   if (is.character(time)) time <- match(time, colnames(const))
   m <- max(1, ncol(const[, -c(time, stratum)]))
   f <- function(x) c(0, -x[-length(x)]) + x
