@@ -64,7 +64,7 @@ coxdual <- function(formula, data = parent.frame(), subset, init = NULL,
                                     ceiling(max(d$v))), part, npart,
                    SIMPLIFY = FALSE)
   }
-  else part <- lapply(d$supp, function(x) c(0, x))
+  else part <- lapply(d$supp, function(x) c(min(d$u), x))
   npart <- sapply(part, length)
   ## type-specific partition
   tvec <- do.call("c", part)
@@ -126,7 +126,7 @@ coxdual <- function(formula, data = parent.frame(), subset, init = NULL,
   else fit.coxph <- NULL
   ## initial values
   if (is.null(init)) init <- list()
-  init.coxph <- init.coxph & !is.null(fit.coxph$coef[[1]])
+  init.coxph <- init.coxph & !is.null(fit.coxph[[1]]$basehaz)
   if (init.coxph) {
     init$coef <- fit.coxph[[1]]$coef
     init$basehaz <- fit.coxph[[1]]$basehaz
@@ -229,7 +229,8 @@ coxdual <- function(formula, data = parent.frame(), subset, init = NULL,
   if (length(fit.coxph) == 1) fit.coxph <- fit.coxph[[1]]
   fit <- list(call = cl, censor = censor, n = n, m = nrow(mf),
               p = ncov * (length(icov) > 0), coef = fit$coef, var = var,
-              basehaz = basehaz, init = init, loglik = n * fit$loglik,
+              basehaz = basehaz, init = init,
+              loglik = n * with(fit, loglik[1:(iter + 1)]),
               iter = fit$iter, maxnorm = fit$maxnorm, gradnorm = fit$gradnorm,
               cputime = fit$cputime, coxph = fit.coxph,
               na.action = attr(mf, "na.action"), censor.rate = censor.rate,

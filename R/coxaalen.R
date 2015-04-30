@@ -1,6 +1,5 @@
 coxaalen <- function(formula, data = parent.frame(), subset, init = NULL,
-                     formula.timereg = NULL, init.timereg = FALSE,
-                     close.cplex = TRUE, control, ...)
+                     formula.timereg = NULL, init.timereg = FALSE, control, ...)
 {
   ## extract model frame and perform input validation
   cl <- match.call(expand.dots = FALSE)
@@ -128,7 +127,6 @@ coxaalen <- function(formula, data = parent.frame(), subset, init = NULL,
       init$basehaz[, "(Intercept)"] <- init$basehaz[, "(Intercept)"] + basehaz
     else init$basehaz <- init$basehaz + basehaz
   }
-  if (close.cplex) on.exit(.C("freecplex"))
   fit <- .C("coxaalen",
             coef = as.double(init$coef),
             basehaz = as.double(t(init$basehaz)),
@@ -189,12 +187,14 @@ coxaalen <- function(formula, data = parent.frame(), subset, init = NULL,
           "Right" = sum(mf[, irsp][, 3] == 0)) / n
   rownames(censor.rate) <- "Censoring rate"
   fit <- list(call = cl, n = n, p = nprp, coef = fit$coef, var = var,
-              basehaz = basehaz, maximalint = time$int, init = init,
-              loglik = n * fit$loglik, iter = fit$iter,
+              basehaz = basehaz, init = init,
+              loglik = n * with(fit, loglik[1:(iter + 1)]), iter = fit$iter,
               maxnorm = fit$maxnorm, gradnorm = abs(fit$gradnorm),
               cputime = fit$cputime, timereg = fit.timereg,
               na.action = attr(mf, "na.action"), censor.rate = censor.rate,
               control = control)
+  if (control$data)
+    fit$data <- list(maximalint = time$int, prop = mm[, jprp], add = mm[, jadd])
   if (length(fit$timereg) == 1) fit$timereg <- fit$timereg[[1]]
   class(fit) <- c("coxaalen", "coxinterval")
   fit

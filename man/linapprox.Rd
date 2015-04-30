@@ -3,13 +3,13 @@
 
 \title{Linear approximation}
 
-\description{Perform linear interpolation or approximation}
+\description{Perform linear interpolation or extrapolation}
 
 \usage{linapprox(xyin, xout)}
 
 \arguments{
   \item{xyin}{
-    matrix whose rows give the coordinate pairs of the points to be
+    a matrix whose rows give the coordinate pairs of the points to be
     interpolated or extrapolated.
   }
   \item{xout}{

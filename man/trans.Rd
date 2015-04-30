@@ -4,8 +4,8 @@
 \title{Identify transition type in model terms}
 
 \description{
-  A special function for Cox models fit with \code{\link{coxdual}} that
-  identifies formula terms specifying the state-transition type.
+  A special function for \code{\link{coxdual}} that identifies formula
+  terms specifying the state-transition type.
 }
 
 \usage{trans(from, to)}

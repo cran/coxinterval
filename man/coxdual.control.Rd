@@ -16,13 +16,13 @@ coxdual.control(eps = 1e-07, iter.max = 50000, coef.typ = 1,
 
 \arguments{
   \item{eps}{
-    maximum threshold for the relative change in the model fit required
-    to meet the iterative estimation routine's stopping rule.
+    threshold value for the norm used to measure convergence in the
+    parameter estimates.
   }
   \item{iter.max}{
     maximum number of iterations to attempt.  This ensures that
-    \code{\link{coxdual}} will eventually exit, even when there are
-    convergence issues.
+    \code{\link{coxdual}} will eventually exit, even when the
+    convergence criteria are not met.
   }
   \item{coef.typ}{
     a scalar or vector of typical (absolute) values for the
@@ -36,7 +36,9 @@ coxdual.control(eps = 1e-07, iter.max = 50000, coef.typ = 1,
   }
   \item{sieve}{
     a logical value indicating that the sieve rather than the
-    semiparametric MLE should be fit to the data.
+    semiparametric maximum likelihood estimator should be fit to the
+    data.  The default \code{TRUE} is recommended to avoid issues with
+    support finding and convergence.
   }
   \item{sieve.const}{
     a constant factor that, in part, determines the sieve size.  The

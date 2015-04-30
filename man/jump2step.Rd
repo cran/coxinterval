@@ -1,18 +1,18 @@
 \name{jump2step}
 \alias{jump2step}
 
-\title{Accumulate increments in a step function of time}
+\title{Accumulate increments in values from a step function of time}
 
 \description{
-  A utility function for \code{\link{coxdual}} that returns the step
-  function values given its increments over time.
+  A utility function for \code{\link{coxdual}} that returns values from
+  a step function given its increments over time.
 }
 
 \usage{jump2step(jump, time = "time", stratum = NULL)}
 
 \arguments{
   \item{jump}{
-    A matrix whose columns give increments in the (possibly
+    a matrix whose columns give increments in the (possibly
     multivariate) step function, corresponding time points and strata.
   }
   \item{time}{

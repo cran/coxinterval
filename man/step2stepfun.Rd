@@ -12,7 +12,7 @@
 
 \arguments{
   \item{step}{
-    A matrix whose columns give the (possibly multivariate) step
+    a matrix whose columns give the (possibly multivariate) step
     function values, corresponding time points and strata.
   }
   \item{time}{

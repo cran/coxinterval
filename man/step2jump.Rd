@@ -4,15 +4,15 @@
 \title{Increments from a step function of time}
 
 \description{
-  A utility function for \code{\link{coxdual}} that returns the increments
-  in a step function of time.
+  A utility function for \code{\link{coxdual}} that returns increments
+  from values of a step function over time.
 }
 
 \usage{step2jump(step, time = "time", stratum = NULL)}
 
 \arguments{
   \item{step}{
-    A matrix whose columns give the (possibly multivariate) step
+    a matrix whose columns give the (possibly multivariate) step
     function values, corresponding time points and strata.
   }
   \item{time}{

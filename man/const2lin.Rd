@@ -1,18 +1,18 @@
 \name{const2lin}
 \alias{const2lin}
 
-\title{Accumulate a piecewise constant function of time}
+\title{Accumulate values from a piecewise constant function of time}
 
 \description{
-  A utility function for \code{\link{coxdual}} that returns the integrates
-  of a piecewise constant function of time, evaluated at given values.
+  A utility function for \code{\link{coxdual}} that integrates values
+  from a piecewise constant function of time.
 }
 
 \usage{const2lin(const, time = "time", stratum = NULL)}
 
 \arguments{
   \item{const}{
-    A matrix whose columns give the (possibly multivariate) piecewise
+    a matrix whose columns give the (possibly multivariate) piecewise
     constant function values, corresponding time points and strata.
   }
   \item{time}{

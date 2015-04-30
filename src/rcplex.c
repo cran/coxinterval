@@ -1,32 +1,6 @@
 #include <R.h>
 #include "rcplex.h"
 
-void
-freecplex(void)
-{
-  int status = 0;
-  char errmsg[1024];
-  if (lp != NULL) {
-    status = CPXfreeprob(env, &lp);
-    lp = NULL;
-    if (status) {
-      CPXgeterrorstring(env, status, errmsg);
-      error("Could not free CPLEX problem.\n%s\n", errmsg);
-    }
-  }
-  if (env != NULL && closecplex) {
-    status = CPXcloseCPLEX(&env);
-    env = NULL;
-    if (status) {
-      CPXgeterrorstring(env, status, errmsg);
-      error("Could not close CPLEX.\n%s\n", errmsg);
-    }
-    else
-      Rprintf("Closed CPLEX.\n");
-  }
-  return;
-}
-
 int
 qpcplex(const int ncol, const int nrow, const double *c, const double *Q,
         const double *A, double *soln, const int screen, const int threads,
@@ -51,10 +25,8 @@ qpcplex(const int ncol, const int nrow, const double *c, const double *Q,
     if (status)
       warning("Failed to set thread parameter. Default value used instead.\n");
     lp = CPXcreateprob(env, &status, probname);
-    if (lp == NULL) {
-      closecplex = 1;
+    if (lp == NULL)
       warning("Could not create CPLEX problem.\n");
-    }
   }
   for (i = 0; i < nrow; i++) {
     sense[i] = 'G';
@@ -80,6 +52,13 @@ qpcplex(const int ncol, const int nrow, const double *c, const double *Q,
   status = CPXqpopt(env, lp);
   if (status) goto geterrmsg;
   status = CPXgetx(env, lp, soln, 0, CPXgetnumcols(env, lp) - 1);
+  if (status) goto geterrmsg;
+  if (lp != NULL) {
+    status = CPXfreeprob(env, &lp);
+    lp = NULL;
+  }
+  if (status) goto geterrmsg;
+  if (env != NULL) status = CPXcloseCPLEX(&env);
   if (status) goto geterrmsg;
 geterrmsg:
   CPXgeterrorstring(env, status, errmsg);

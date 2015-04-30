@@ -27,12 +27,12 @@
       subsequent state index.
     }
     \item{\code{start}}{
-      left-endpoint of the time interval at which the subject is known
+      left endpoint of the time interval at which the subject is known
       to be at risk for a transition between state \code{from} and state
       \code{to}.
     }
     \item{\code{stop}}{
-      right-endpoint of the at-risk interval.
+      right endpoint of the at-risk interval.
     }
     \item{\code{status}}{
       indicator that a transition between state \code{from} and state

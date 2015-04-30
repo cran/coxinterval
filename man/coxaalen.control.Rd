@@ -12,7 +12,7 @@
 coxaalen.control(eps = 1e-07, eps.norm = c("max", "grad"),
                  iter.max = 5000, armijo = 1/3, var.coef = TRUE,
                  coef.typ = 1, coef.max = 10, trace = FALSE,
-                 thread.max = 1)
+                 thread.max = 1, data = FALSE)
 }
 
 \arguments{
@@ -23,26 +23,29 @@ coxaalen.control(eps = 1e-07, eps.norm = c("max", "grad"),
   \item{eps.norm}{
     a character string identifying the norm to use in the convergence
     criteria---either the maximum norm between the current and
-    previous parameter values (\code{eps.norm = "max"}) or the inner
-    product between the current value and the score
+    previous parameter values (\code{eps.norm = "max"}) or the absolute
+    inner product between the current value and the score
     (\code{eps.norm = "grad"}).
   }
   \item{iter.max}{
     maximum number of iterations to attempt.  This ensures that
     \code{\link{coxaalen}} will eventually exit, even when the
-    stopping rule is not met.  A warning is issued whenever the
+    convergence criteria is not met.  A warning is issued whenever the
     estimation routine has stopped before converging on a final
     parameter value.
   }
   \item{armijo}{
-    a scale factor in (0, 1/2) for Armijo's (1966) rule---a step-halving
-    line search used to ensure that each iteration achieves an adequate
-    increase in the log-likelihood.  The model fit is not particularly
-    sensitive to this value.
+    a scale factor in (0, 1/2) for Armijo's (1966) rule---a line search
+    used to ensure that each iteration achieves an adequate increase in
+    the log-likelihood.  The model fit is typically not very sensitive
+    to this value.
   }
   \item{var.coef}{
-    a logical value indicating that standard errors for the regression
-    coefficients should be estimated via profile likelihood.
+    a logical value indicating that standard errors for the
+    multiplicative regression coefficients should be estimated.  This is
+    done via profile likelihood---an approach that can require an
+    inordinate amount of processing time under many regression
+    coefficients and larger sample size.
   }
   \item{coef.typ}{
     a scalar or vector of typical (absolute) values for the
@@ -59,13 +62,17 @@ coxaalen.control(eps = 1e-07, eps.norm = c("max", "grad"),
     the screen.
   }
   \item{thread.max}{
-    maximum number of CPU threads to allocate to CPLEX.  Default value
-    disables multithreading.  A value of zero allows CPLEX to set the
-    number of threads automatically.  Any value exceeding the total
-    number of logical cores on the system is reset by
-    \code{coxaalen.control} to \code{detectCores(logical = TRUE)}. If this
-    new value does not reflect the total number of available threads, it
-    is later adjusted by CPLEX.
+    maximum number of CPU threads to allocate to CPLEX.  The default
+    value disables multithreading.  A value of zero allows CPLEX to set
+    the number of threads automatically.  The actual number of threads
+    used is limited by the number of available processors and the CPLEX
+    license.
+  }
+  \item{data}{
+    a logical value indicating that the object returned by
+    \code{\link{coxaalen}} should contain an element \code{data} that
+    gives the maximal intersections and the model matrix split into
+    multiplicative and additive terms.
   }
 }
 

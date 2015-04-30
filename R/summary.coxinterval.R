@@ -10,18 +10,20 @@ summary.coxinterval <- function(object, conf.int = 0.95, scale = 1, ...)
     else {
       est <- fit$coef
       se <- sqrt(diag(fit$var))
-      out$mat <- cbind(est, se, est/se, 1 - pchisq((est/se)^2, 1), exp(est))
-      dimnames(out$mat) <-
-        list(names(est), c("coef", "se(coef)", "z", "p", "exp(coef)"))
+      out$coef.mat <- cbind(est, exp(est), se, est/se, 1 - pchisq((est/se)^2, 1))
+      dimnames(out$coef) <-
+        list(names(est), c("coef", "exp(coef)", "se(coef)", "z", "Pr(>|z|)"))
       if (conf.int) {
         lower <- (1 - conf.int)/2
         upper <- (1 + conf.int)/2
-        out$mat <-
-          cbind(out$mat,
-                exp(scale * est + qnorm(lower) * se * scale),
-                exp(scale * est + qnorm(upper) * se * scale))
-        colnames(out$mat)[c(ncol(out$mat) - 1, ncol(out$mat))] <-
-          paste(round(100 * c(lower, upper), 2), "%", sep = "")
+        est <- scale * est
+        se <- scale * se
+        out$conf <- cbind(exp(-est), exp(est), exp(est + qnorm(lower) * se),
+                          exp(est + qnorm(upper) * se))
+        dimnames(out$conf) <-
+          list(names(est),
+               c("exp(-coef)", "exp(coef)",
+                 paste(round(100 * c(lower, upper), 2), "%", sep = "")))
       }
     }
     out

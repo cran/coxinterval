@@ -1,5 +1,6 @@
 print.summary.coxinterval <-
-  function(x, digits = max(3, getOption("digits") - 4), ...)
+  function(x, digits = max(3, getOption("digits") - 4),
+           signif.stars = getOption("show.signif.stars"), ...)
 {
   cat("Call:\n")
   dput(x$call)
@@ -11,13 +12,16 @@ print.summary.coxinterval <-
       cat("Formula:\n")
       dput(fit$formula)
     }
-    if (is.null(fit$mat) & x$p > 0) cat("  Estimation failed\n")
+    if (is.null(fit$coef) & x$p > 0) cat("  Estimation failed\n")
     else {
       cat("\n")
       if (fit$p > 0) {
-        fit$mat[, grep("z", colnames(fit$mat))] <-
-          signif(fit$mat[, grep("z", colnames(fit$mat))], digits - 1)
-        prmatrix(fit$mat)
+        printCoefmat(fit$coef, digits = digits, signif.stars = signif.stars,
+                     dig.tst = max(1, digits - 1), ...)
+        if (!is.null(fit$conf)) {
+          cat("\n")
+          prmatrix(fit$conf)
+        }
       }
       else cat("Null model\n")
       cat("\n")
@@ -37,7 +41,7 @@ print.summary.coxinterval <-
   options(digits = ceiling(log10(x$n)) + digits)
   cat("\n")
   cat("Initial log-likelihood:", x$loglik[1], "\n")
-  cat("Log-likelihood after", x$iter, "iterations:", x$loglik[2], "\n")
+  cat("Log-likelihood after", x$iter, "iterations:", x$loglik[x$iter + 1], "\n")
   options(digits = digits)
   cat("\n")
   prmatrix(x$censor.rate)

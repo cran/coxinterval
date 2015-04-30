@@ -12,14 +12,13 @@
 
 \usage{
 coxaalen(formula, data = parent.frame(), subset, init = NULL,
-         formula.timereg = NULL, init.timereg = FALSE,
-         close.cplex = TRUE, control, ...)
+         formula.timereg = NULL, init.timereg = FALSE, control, ...)
 }
 
 \arguments{
   \item{formula}{
     an expression of the form \code{response ~ terms}, where
-    \code{response} is a survival object returned by the
+    \code{response} is an object returned by the
     \code{\link[survival]{Surv}} function and \code{terms} contains at
     least one multiplicative term identified by the
     \code{\link[timereg]{prop}} function from the \CRANpkg{timereg}
@@ -41,29 +40,24 @@ coxaalen(formula, data = parent.frame(), subset, init = NULL,
     initialized to zero.  The element \code{basehaz} should be a matrix
     or data frame whose columns represent time and the corresponding
     value for the cumulative baseline hazard function and any remaining
-    additive cumulative coefficients (also referred to as
-    "regression functions").  The cumulative regression functions are
-    then initialized by linearly interpolating or extrapolating these
-    values. If \code{init = NULL} or \code{basehaz = NULL}, the
+    additive cumulative coefficients.  Initial values are obtained by
+    linear interpolation or extrapolation at observation times relevant
+    in the data.  If \code{init = NULL} or \code{basehaz = NULL}, the
     cumulative baseline hazard function is initialized to a linear
     function of time and any cumulative coefficients are started at
     zero.
   }
   \item{formula.timereg}{
-    a list of formula objects specifying models to fit with
-    the \CRANpkg{timereg} package's \code{\link[timereg]{cox.aalen}}
-    function using right-censored observations in \code{data}.  Here the
-    shorthand \code{"."} refers to the same \code{terms} given in
-    \code{formula}.
+    an optional formula object specifying a model to fit with the
+    \CRANpkg{timereg} package's \code{\link[timereg]{cox.aalen}}
+    function using right-censored observations.  Here the shorthand
+    \code{~ .} refers to the same \code{terms} given in \code{formula}.
+    Multiple formula objects can be provided as a list.
   }
   \item{init.timereg}{
     a logical value indicating that \code{init} should be overrided by
     estimates based on the \code{\link[timereg]{cox.aalen}} fit to the
     first model in \code{formula.timereg}.
-  }
-  \item{close.cplex}{
-    a logical value indicating that CPLEX data structures should be
-    freed when \code{coxaalen} exits.
   }
   \item{control}{
     a named list of parameters controlling the model fit, as returned by
@@ -86,10 +80,10 @@ coxaalen(formula, data = parent.frame(), subset, init = NULL,
   right-censoring times are provided in the variable \code{<left>}
   and \code{<right>} is set to the \code{NA} value.
 
-  Terms in the \code{formula} have either time-varying additive effects
-  on the survival hazard as in Aalen's additive regression model, or
-  fixed multiplicative effects as in the Cox model. Multiplicative terms
-  are distinguished by applying \CRANpkg{timereg}'s
+  Terms in \code{formula} have either time-varying additive effects on
+  the survival hazard as in Aalen's additive regression model, or fixed
+  multiplicative effects as in the Cox model. Multiplicative terms are
+  distinguished by applying \CRANpkg{timereg}'s
   \code{\link[timereg]{prop}} function to each corresponding variable.
 
   \code{coxaalen} depends on libraries that are loaded only if
@@ -103,7 +97,7 @@ coxaalen(formula, data = parent.frame(), subset, init = NULL,
   An object of the class \code{"coxinterval"} and \code{"coxaalen"},
   which is a list with the following components.
   \item{call}{
-    the matched call to \code{coxdual}.
+    the matched call to \code{coxaalen}.
   }
   \item{n}{
     size of the sample used in the model fit.
@@ -120,17 +114,17 @@ coxaalen(formula, data = parent.frame(), subset, init = NULL,
   }
   \item{basehaz}{
     a data frame giving the cumulative regression functions evaluated at
-    time points given by the maximal intersections of the censoring
-    intervals.
+    time points given by the right endpoints of the maximal
+    intersections among the censoring intervals.
   }
   \item{init}{
     list of initial values used in the model fit.
   }
   \item{loglik}{
-    a vector giving the initial and final log-likelihood values.
+    a vector giving the log-likelihood at initiation and each iteration.
   }
   \item{iter}{
-    number of iterations needed to achieve the model fit.
+    number of iterations needed to meet the stopping criteria.
   }
   \item{maxnorm}{
     the maximum norm of the difference between the penultimate and final
@@ -144,9 +138,10 @@ coxaalen(formula, data = parent.frame(), subset, init = NULL,
     the processing time for parameter and variance estimation.
   }
   \item{fit.timereg}{
-    an unnamed list whose components give the
-    \code{\link[timereg]{cox.aalen}} fit to any models specified by the
-    \code{formula.timereg} argument.
+    the \code{\link[timereg]{cox.aalen}} fit to any models specified by
+    the \code{formula.timereg} argument.  If \code{formula.timereg} is a
+    list of formula objects, \code{fit.timereg} is an unnamed list
+    following the same order.
   }
   \item{na.action}{
     the \code{"na.action"} attribute of the model frame.
@@ -156,7 +151,13 @@ coxaalen(formula, data = parent.frame(), subset, init = NULL,
     and right-censored observations used in the model fit.
   }
   \item{control}{
-    a named list of arguments passed to \code{\link{coxdual.control}}.
+    a named list of arguments passed to \code{\link{coxaalen.control}}.
+  }
+  \item{data}{
+    a list containing the maximal intersections among the censoring
+    intervals and model matrices for the multiplicative and additive
+    terms in \code{formula}.  This component is returned only if the
+    \code{\link{coxaalen.control}} argument \code{data} is true.
   }
 }
 

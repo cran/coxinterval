@@ -126,13 +126,13 @@ loglik(double *c, double *h, double *z, double *t, double *s, double *left,
         EdN[sidx[j]] += pseg;
         for (k = 0; k < 2; k++)
           /* at risk for 0 -> 1, 2 */
-          for (l = 1; l <= d[k]; l++) {
+          for (l = 1; l < d[k]; l++) {
             if (h[l + D[k]] <= 0) continue;
             g1h1[l + D[k]] -= rsk[k] * pseg * L(t, k, l, u[i], beg);
             EY[l + D[k]] += pseg * L(t, k, l, u[i], beg);
           }
         /* at risk for 1 -> 2 */
-        for (k = 1; k <= d[2]; k++) {
+        for (k = 1; k < d[2]; k++) {
           if (h[k + D[2]] <= 0) continue;
           g1h1[k + D[2]] -= rsk[2] * pseg * L(t, 2, k, end, v[i]);
           EY[k + D[2]] += pseg * L(t, 2, k, end, v[i]);
@@ -221,7 +221,7 @@ loglik(double *c, double *h, double *z, double *t, double *s, double *left,
               - pseg * len * s0 / dseg;
           }
           /* at risk for 0 -> 1, 2 */
-          for (l = 1; l <= d[k]; l++) {
+          for (l = 1; l < d[k]; l++) {
             if (h[l + D[k]] <= 0) continue;
             g1h1[l + D[k]] -= rsk[k] * pseg * rseg * L(t, k, l, u[i], beg);
             EY[l + D[k]] += pseg * rseg * L(t, k, l, u[i], beg);
@@ -234,7 +234,7 @@ loglik(double *c, double *h, double *z, double *t, double *s, double *left,
             - pseg * rseg / dseg;
         }
         /* at risk for 1 -> 2 */
-        for (k = 1; k <= d[2]; k++) {
+        for (k = 1; k < d[2]; k++) {
           if (h[k + D[2]] <= 0) continue;
           g1h1[k + D[2]] -= rsk[2] * pseg * rseg * L(t, 2, k, end, v[i]);
           EY[k + D[2]] += pseg * rseg * L(t, 2, k, end, v[i]);
@@ -269,7 +269,7 @@ loglik(double *c, double *h, double *z, double *t, double *s, double *left,
       g1h2[vidx[i + n] + D[1]] += absorb[i] * rsk[1] * prob2 / a02;
       EdN[vidx[i + n] + D[1]] += absorb[i] * prob2;
       for (j = 0; j < 2; j++)
-        for (k = 1; k <= d[j]; k++) {
+        for (k = 1; k < d[j]; k++) {
           if (h[k + D[j]] <= 0) continue;
           g1h2[k + D[j]] -= rsk[j] * prob2 * L(t, j, k, u[i], v[i]);
           EY[k + D[j]] += prob2 * L(t, j, k, u[i], v[i]);

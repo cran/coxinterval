@@ -1,18 +1,18 @@
 \name{lin2const}
 \alias{lin2const}
 
-\title{Derivative values from a piecewise linear function of time}
+\title{Slopes from values of a piecewise linear function of time}
 
 \description{
-  A utility function for \code{\link{coxdual}} that returns the derivative
-  of a piecewise linear function of time, evaluated at given values.
+  A utility function for \code{\link{coxdual}} that gives the slope
+  corresponding to values from a piecewise linear function of time.
 }
 
 \usage{lin2const(lin, time = "time", stratum = NULL)}
 
 \arguments{
   \item{lin}{
-    A matrix whose columns give the (possibly multivariate) piecewise
+    a matrix whose columns give the (possibly multivariate) piecewise
     linear function values, time points and strata.
   }
   \item{time}{

@@ -1,7 +1,13 @@
+coxinterval 1.2
+
+* Fix array overruns
+* Free all CPLEX data structures on each QP to avoid memory leaks
+* Correctly print final likelihood in model summary
+
 coxinterval 1.1
 
-* Model functions renamed.
-* Added new control parameters.
-* Limited support for null models excluding covariates.
-* Made some utlitity functions external.
-* Minor corrections to sieve estimation.
+* Rename model functions
+* Add new control parameters
+* Include limited support for null models excluding covariates
+* Make some utility functions external
+* Apply minor corrections to sieve estimation
